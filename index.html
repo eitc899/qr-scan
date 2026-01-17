@@ -2,158 +2,74 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>快速掃描器 - 優化對焦版</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
+    <title>掃描 QR Code / 條碼</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://unpkg.com/html5-qrcode"></script>
-
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: Arial;
             text-align: center;
             padding: 10px;
-            background-color: #f8f9fa;
         }
-        h2 { color: #333; }
         #reader {
             width: 100%;
-            max-width: 450px;
-            margin: 15px auto;
-            border-radius: 8px;
-            overflow: hidden;
+            max-width: 420px;
+            margin: auto;
             display: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        .controls {
-            margin-bottom: 20px;
         }
         button {
-            font-size: 16px;
-            font-weight: bold;
-            padding: 12px 24px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: background 0.3s;
+            font-size: 18px;
+            padding: 10px 20px;
         }
-        button:active { background-color: #0056b3; }
-        
-        table {
-            width: 100%;
-            max-width: 600px;
-            margin: 20px auto;
-            border-collapse: collapse;
-            background: white;
-            font-size: 14px;
-        }
-        th, td {
-            border: 1px solid #dee2e6;
-            padding: 10px;
-            word-break: break-all;
-        }
-        th { background-color: #e9ecef; }
     </style>
 </head>
 <body>
 
-<h2>📷 快速掃描器</h2>
+<h2>📷 掃描 QR Code / 條碼</h2>
 
-<div class="controls">
-    <button id="startBtn">啟動掃描槍</button>
-</div>
+<button id="startBtn">開始掃描</button>
 
 <div id="reader"></div>
-
-<table>
-    <thead>
-        <tr>
-            <th>#</th>
-            <th>內容</th>
-            <th>類型</th>
-            <th>時間</th>
-        </tr>
-    </thead>
-    <tbody id="resultTable"></tbody>
-</table>
 
 <script>
     let html5QrCode;
     let isScanning = false;
-    let count = 0;
 
-    const startBtn = document.getElementById("startBtn");
-    const resultTable = document.getElementById("resultTable");
-    const readerDiv = document.getElementById("reader");
-
-    startBtn.addEventListener("click", async () => {
+    document.getElementById("startBtn").addEventListener("click", async () => {
         if (isScanning) return;
 
         isScanning = true;
-        readerDiv.style.display = "block";
-        startBtn.innerText = "正在掃描...";
-        startBtn.style.backgroundColor = "#6c757d";
+        document.getElementById("reader").style.display = "block";
 
         html5QrCode = new Html5Qrcode("reader");
 
-        // 優化設定：提高 FPS 並優化偵測框
-        const config = {
-            fps: 20,           // 🚀 提高到 20 FPS (反應更即時)
-            qrbox: (viewfinderWidth, viewfinderHeight) => {
-                // 🚀 動態偵測框：針對條碼調整為長方形，減少演算法運算面積
-                const width = viewfinderWidth * 0.7;
-                const height = viewfinderHeight * 0.3; 
-                return { width: width, height: height };
-            },
-            aspectRatio: 1.0,  // 強制 1:1 或隨螢幕調整
-            experimentalFeatures: {
-                useBarCodeDetectorIfSupported: true // 🚀 關鍵：開啟手機原生硬體加速
-            }
-        };
-
         try {
             await html5QrCode.start(
-                { facingMode: "environment" }, // 強制後置鏡頭
-                config,
-                async (decodedText, decodedResult) => {
-                    count++;
-                    
-                    // 新增結果到表格
-                    const row = `
-                        <tr>
-                            <td>${count}</td>
-                            <td><strong>${decodedText}</strong></td>
-                            <td>${decodedResult.result.format.formatName}</td>
-                            <td>${new Date().toLocaleTimeString()}</td>
-                        </tr>
-                    `;
-                    resultTable.insertAdjacentHTML("afterbegin", row); // 新的在最上面
-
-                    // 成功後立即停止以節省資源
-                    stopScanning();
+                { facingMode: "environment" },
+                {
+                    fps: 5,
+                    qrbox: { width: 320, height: 180 },
+                    formatsToSupport: [
+                        Html5QrcodeSupportedFormats.QR_CODE,
+                        Html5QrcodeSupportedFormats.CODE_128,
+                        Html5QrcodeSupportedFormats.EAN_13
+                    ]
                 },
-                (errorMessage) => {
-                    // 忽略偵測中的錯誤訊息以提升效能
-                }
+                async (decodedText) => {
+                    alert("掃描成功：" + decodedText);
+
+                    // ⭐ 掃到就立刻關閉（自動）
+                    await html5QrCode.stop();
+                    document.getElementById("reader").style.display = "none";
+                    isScanning = false;
+                },
+                () => {}
             );
-        } catch (err) {
-            console.error(err);
-            alert("無法啟動相機。請確保：\n1. 使用 HTTPS 連線\n2. 已授權相機存取");
-            stopScanning();
+        } catch {
+            alert("相機啟動失敗");
+            isScanning = false;
         }
     });
-
-    async function stopScanning() {
-        if (html5QrCode && html5QrCode.isScanning) {
-            await html5QrCode.stop();
-            html5QrCode.clear();
-        }
-        isScanning = false;
-        readerDiv.style.display = "none";
-        startBtn.innerText = "啟動掃描槍";
-        startBtn.style.backgroundColor = "#007bff";
-    }
 </script>
 
 </body>
