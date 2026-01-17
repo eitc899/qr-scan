@@ -2,10 +2,9 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>手機掃描 QR Code / 條碼</title>
+    <title>掃描 QR Code / 條碼</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- html5-qrcode -->
     <script src="https://unpkg.com/html5-qrcode"></script>
 
     <style>
@@ -18,6 +17,11 @@
             width: 100%;
             max-width: 400px;
             margin: auto;
+            display: none;
+        }
+        button {
+            font-size: 18px;
+            padding: 10px 20px;
         }
         #result {
             margin-top: 15px;
@@ -31,37 +35,41 @@
 
 <h2>📷 掃描 QR Code / 條碼</h2>
 
+<button id="startBtn">開始掃描</button>
+
 <div id="reader"></div>
 
 <div id="result">尚未掃描</div>
 
 <script>
-    function onScanSuccess(decodedText, decodedResult) {
-        document.getElementById("result").innerText =
-            "掃描結果：" + decodedText;
+    const html5QrCode = new Html5Qrcode("reader");
 
-        // 若只想掃描一次就停止
-        html5QrcodeScanner.clear();
-    }
+    document.getElementById("startBtn").addEventListener("click", () => {
+        document.getElementById("reader").style.display = "block";
 
-    function onScanFailure(error) {
-        // 掃描失敗時可忽略，避免畫面一直跳錯誤
-    }
+        Html5Qrcode.getCameras().then(cameras => {
+            if (cameras && cameras.length) {
+                const cameraId = cameras[cameras.length - 1].id; // 後鏡頭
 
-    const html5QrcodeScanner = new Html5QrcodeScanner(
-        "reader",
-        {
-            fps: 10,
-            qrbox: { width: 250, height: 250 },
-            rememberLastUsedCamera: true,
-            supportedScanTypes: [
-                Html5QrcodeScanType.SCAN_TYPE_CAMERA
-            ]
-        },
-        false
-    );
+                html5QrCode.start(
+                    cameraId,
+                    {
+                        fps: 10,
+                        qrbox: 250
+                    },
+                    (decodedText) => {
+                        document.getElementById("result").innerText =
+                            "掃描結果：" + decodedText;
 
-    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+                        html5QrCode.stop();
+                    },
+                    (errorMessage) => {
+                        // ignore scan errors
+                    }
+                );
+            }
+        });
+    });
 </script>
 
 </body>
