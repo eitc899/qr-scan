@@ -15,7 +15,7 @@
         }
         #reader {
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             margin: auto;
             display: none;
         }
@@ -48,20 +48,32 @@
     document.getElementById("startBtn").addEventListener("click", async () => {
         if (isScanning) return;
 
-        document.getElementById("reader").style.display = "block";
-        document.getElementById("result").innerText = "啟動相機中…";
-
         isScanning = true;
+        document.getElementById("reader").style.display = "block";
+        document.getElementById("result").innerText = "請對準條碼或 QR Code";
+
         html5QrCode = new Html5Qrcode("reader");
 
         try {
             await html5QrCode.start(
-                { facingMode: "environment" }, // ⭐ 最穩定的後鏡頭指定方式
+                { facingMode: "environment" },
                 {
-                    fps: 10,
-                    qrbox: { width: 250, height: 250 }
+                    fps: 5, // ⭐ 條碼一定要低 fps
+                    qrbox: {
+                        width: 320,   // ⭐ 橫向加寬
+                        height: 180
+                    },
+                    formatsToSupport: [
+                        Html5QrcodeSupportedFormats.QR_CODE,
+                        Html5QrcodeSupportedFormats.CODE_128,
+                        Html5QrcodeSupportedFormats.CODE_39,
+                        Html5QrcodeSupportedFormats.EAN_13,
+                        Html5QrcodeSupportedFormats.EAN_8,
+                        Html5QrcodeSupportedFormats.UPC_A,
+                        Html5QrcodeSupportedFormats.UPC_E
+                    ]
                 },
-                (decodedText) => {
+                (decodedText, decodedResult) => {
                     document.getElementById("result").innerText =
                         "掃描結果：" + decodedText;
 
@@ -70,7 +82,7 @@
                 },
                 () => {}
             );
-        } catch (err) {
+        } catch (e) {
             document.getElementById("result").innerText =
                 "相機啟動失敗，請確認權限";
             isScanning = false;
