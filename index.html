@@ -22,12 +22,22 @@
         button {
             font-size: 18px;
             padding: 10px 20px;
+            margin: 5px;
         }
-        #result {
-            margin-top: 15px;
-            font-size: 18px;
-            color: green;
+        table {
+            width: 100%;
+            max-width: 600px;
+            margin: 15px auto;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 6px;
             word-break: break-all;
+        }
+        th {
+            background-color: #f2f2f2;
         }
     </style>
 </head>
@@ -36,21 +46,33 @@
 <h2>📷 掃描 QR Code / 條碼</h2>
 
 <button id="startBtn">開始掃描</button>
+<button id="stopBtn">停止掃描</button>
 
 <div id="reader"></div>
 
-<div id="result">尚未掃描</div>
+<table>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>掃描內容</th>
+            <th>類型</th>
+            <th>時間</th>
+        </tr>
+    </thead>
+    <tbody id="resultTable"></tbody>
+</table>
 
 <script>
     let html5QrCode;
     let isScanning = false;
+    let count = 0;
+    let lastResult = "";
 
     document.getElementById("startBtn").addEventListener("click", async () => {
         if (isScanning) return;
 
         isScanning = true;
         document.getElementById("reader").style.display = "block";
-        document.getElementById("result").innerText = "請對準條碼或 QR Code";
 
         html5QrCode = new Html5Qrcode("reader");
 
@@ -58,11 +80,8 @@
             await html5QrCode.start(
                 { facingMode: "environment" },
                 {
-                    fps: 5, // ⭐ 條碼一定要低 fps
-                    qrbox: {
-                        width: 320,   // ⭐ 橫向加寬
-                        height: 180
-                    },
+                    fps: 5,
+                    qrbox: { width: 320, height: 180 },
                     formatsToSupport: [
                         Html5QrcodeSupportedFormats.QR_CODE,
                         Html5QrcodeSupportedFormats.CODE_128,
@@ -74,19 +93,40 @@
                     ]
                 },
                 (decodedText, decodedResult) => {
-                    document.getElementById("result").innerText =
-                        "掃描結果：" + decodedText;
 
-                    html5QrCode.stop();
-                    isScanning = false;
+                    // 避免同一條碼連續重複掃描
+                    if (decodedText === lastResult) return;
+                    lastResult = decodedText;
+
+                    count++;
+
+                    const row = `
+                        <tr>
+                            <td>${count}</td>
+                            <td>${decodedText}</td>
+                            <td>${decodedResult.result.format.formatName}</td>
+                            <td>${new Date().toLocaleTimeString()}</td>
+                        </tr>
+                    `;
+
+                    document.getElementById("resultTable")
+                        .insertAdjacentHTML("beforeend", row);
                 },
                 () => {}
             );
         } catch (e) {
-            document.getElementById("result").innerText =
-                "相機啟動失敗，請確認權限";
+            alert("相機啟動失敗，請確認權限");
             isScanning = false;
         }
+    });
+
+    document.getElementById("stopBtn").addEventListener("click", async () => {
+        if (!isScanning) return;
+
+        await html5QrCode.stop();
+        isScanning = false;
+        lastResult = "";
+        document.getElementById("reader").style.display = "none";
     });
 </script>
 
