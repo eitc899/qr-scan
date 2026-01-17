@@ -76,42 +76,40 @@
 
         try {
             await html5QrCode.start(
-                { facingMode: "environment" },
-                {
-                    fps: 5,
-                    qrbox: { width: 320, height: 180 },
-                    formatsToSupport: [
-                        Html5QrcodeSupportedFormats.QR_CODE,
-                        Html5QrcodeSupportedFormats.CODE_128,
-                        Html5QrcodeSupportedFormats.CODE_39,
-                        Html5QrcodeSupportedFormats.EAN_13,
-                        Html5QrcodeSupportedFormats.EAN_8,
-                        Html5QrcodeSupportedFormats.UPC_A,
-                        Html5QrcodeSupportedFormats.UPC_E
-                    ]
-                },
-                async (decodedText, decodedResult) => {
+    { facingMode: "environment" },
+    {
+        fps: 12,   // ⭐ 提高畫面更新率
+        qrbox: {
+            width: 360,   // ⭐ 放大掃描區
+            height: 220
+        },
+        formatsToSupport: [
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.QR_CODE
+        ]
+    },
+    async (decodedText, decodedResult) => {
 
-                    count++;
+        count++;
 
-                    const row = `
-                        <tr>
-                            <td>${count}</td>
-                            <td>${decodedText}</td>
-                            <td>${decodedResult.result.format.formatName}</td>
-                            <td>${new Date().toLocaleTimeString()}</td>
-                        </tr>
-                    `;
+        const row = `
+            <tr>
+                <td>${count}</td>
+                <td>${decodedText}</td>
+                <td>${decodedResult.result.format.formatName}</td>
+                <td>${new Date().toLocaleTimeString()}</td>
+            </tr>
+        `;
 
-                    document.getElementById("resultTable")
-                        .insertAdjacentHTML("beforeend", row);
+        document.getElementById("resultTable")
+            .insertAdjacentHTML("beforeend", row);
 
-                    // ⭐ 掃描完成 → 停止相機並關閉視窗
-                    await html5QrCode.stop();
-                    document.getElementById("reader").style.display = "none";
-                    isScanning = false;
-                },
-                () => {}
+        await html5QrCode.stop();
+        document.getElementById("reader").style.display = "none";
+        isScanning = false;
+    },
+    () => {}
             );
         } catch (e) {
             alert("相機啟動失敗，請確認權限");
