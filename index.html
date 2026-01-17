@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <title>掃描 QR Code / 條碼</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <script src="https://unpkg.com/html5-qrcode"></script>
+
     <style>
         body {
-            font-family: Arial;
+            font-family: Arial, sans-serif;
             text-align: center;
             padding: 10px;
         }
@@ -20,6 +22,22 @@
         button {
             font-size: 18px;
             padding: 10px 20px;
+            margin: 5px;
+        }
+        table {
+            width: 100%;
+            max-width: 600px;
+            margin: 15px auto;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 6px;
+            word-break: break-all;
+        }
+        th {
+            background-color: #f2f2f2;
         }
     </style>
 </head>
@@ -31,9 +49,22 @@
 
 <div id="reader"></div>
 
+<table>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>掃描內容</th>
+            <th>類型</th>
+            <th>時間</th>
+        </tr>
+    </thead>
+    <tbody id="resultTable"></tbody>
+</table>
+
 <script>
     let html5QrCode;
     let isScanning = false;
+    let count = 0;
 
     document.getElementById("startBtn").addEventListener("click", async () => {
         if (isScanning) return;
@@ -52,21 +83,38 @@
                     formatsToSupport: [
                         Html5QrcodeSupportedFormats.QR_CODE,
                         Html5QrcodeSupportedFormats.CODE_128,
-                        Html5QrcodeSupportedFormats.EAN_13
+                        Html5QrcodeSupportedFormats.CODE_39,
+                        Html5QrcodeSupportedFormats.EAN_13,
+                        Html5QrcodeSupportedFormats.EAN_8,
+                        Html5QrcodeSupportedFormats.UPC_A,
+                        Html5QrcodeSupportedFormats.UPC_E
                     ]
                 },
-                async (decodedText) => {
-                    alert("掃描成功：" + decodedText);
+                async (decodedText, decodedResult) => {
 
-                    // ⭐ 掃到就立刻關閉（自動）
+                    count++;
+
+                    const row = `
+                        <tr>
+                            <td>${count}</td>
+                            <td>${decodedText}</td>
+                            <td>${decodedResult.result.format.formatName}</td>
+                            <td>${new Date().toLocaleTimeString()}</td>
+                        </tr>
+                    `;
+
+                    document.getElementById("resultTable")
+                        .insertAdjacentHTML("beforeend", row);
+
+                    // ⭐ 掃描完成 → 停止相機並關閉視窗
                     await html5QrCode.stop();
                     document.getElementById("reader").style.display = "none";
                     isScanning = false;
                 },
                 () => {}
             );
-        } catch {
-            alert("相機啟動失敗");
+        } catch (e) {
+            alert("相機啟動失敗，請確認權限");
             isScanning = false;
         }
     });
