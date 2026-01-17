@@ -46,7 +46,6 @@
 <h2>📷 掃描 QR Code / 條碼</h2>
 
 <button id="startBtn">開始掃描</button>
-<button id="stopBtn">停止掃描</button>
 
 <div id="reader"></div>
 
@@ -66,7 +65,6 @@
     let html5QrCode;
     let isScanning = false;
     let count = 0;
-    let lastResult = "";
 
     document.getElementById("startBtn").addEventListener("click", async () => {
         if (isScanning) return;
@@ -92,11 +90,7 @@
                         Html5QrcodeSupportedFormats.UPC_E
                     ]
                 },
-                (decodedText, decodedResult) => {
-
-                    // 避免同一條碼連續重複掃描
-                    if (decodedText === lastResult) return;
-                    lastResult = decodedText;
+                async (decodedText, decodedResult) => {
 
                     count++;
 
@@ -111,6 +105,11 @@
 
                     document.getElementById("resultTable")
                         .insertAdjacentHTML("beforeend", row);
+
+                    // ⭐ 掃描完成 → 停止相機並關閉視窗
+                    await html5QrCode.stop();
+                    document.getElementById("reader").style.display = "none";
+                    isScanning = false;
                 },
                 () => {}
             );
@@ -118,15 +117,6 @@
             alert("相機啟動失敗，請確認權限");
             isScanning = false;
         }
-    });
-
-    document.getElementById("stopBtn").addEventListener("click", async () => {
-        if (!isScanning) return;
-
-        await html5QrCode.stop();
-        isScanning = false;
-        lastResult = "";
-        document.getElementById("reader").style.display = "none";
     });
 </script>
 
