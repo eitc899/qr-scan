@@ -1,119 +1,68 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <title>æ‰‹æ©Ÿæƒæ QR Code / æ¢ç¢¼</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HTML5 ºô­¶±½½X´ú¸Õ</title>
+
+    <!-- html5-qrcode -->
     <script src="https://unpkg.com/html5-qrcode"></script>
+
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            background-color: #f4f4f9;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 10px;
         }
         #reader {
             width: 100%;
-            max-width: 500px;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        .controls {
-            margin: 20px 0;
-            display: flex;
-            gap: 10px;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
-            background-color: #007bff;
-            color: white;
-        }
-        button:disabled {
-            background-color: #ccc;
+            max-width: 400px;
+            margin: auto;
         }
         #result {
-            width: 100%;
-            max-width: 500px;
-            margin-top: 20px;
-            padding: 15px;
-            background: #fff;
-            border-left: 5px solid #007bff;
+            margin-top: 15px;
+            font-size: 18px;
+            color: green;
             word-break: break-all;
         }
-        h2 { color: #333; }
     </style>
 </head>
 <body>
 
-    <h2>ºô­¶±½½X¾¹ (QR/±ø½X)</h2>
+<h2>ğŸ“· æƒæ QR Code / æ¢ç¢¼</h2>
 
-    <div id="reader"></div>
+<div id="reader"></div>
 
-    <div class="controls">
-        <button id="startBtn">¶}±Ò¬Û¾÷</button>
-        <button id="stopBtn" disabled>°±¤î±½´y</button>
-    </div>
+<div id="result">å°šæœªæƒæ</div>
 
-    <div id="result">±½´yµ²ªG±NÅã¥Ü©ó¦¹...</div>
+<script>
+    function onScanSuccess(decodedText, decodedResult) {
+        document.getElementById("result").innerText =
+            "æƒæçµæœï¼š" + decodedText;
 
-    <script>
-        const html5QrCode = new Html5Qrcode("reader");
-        const startBtn = document.getElementById('startBtn');
-        const stopBtn = document.getElementById('stopBtn');
-        const resultDiv = document.getElementById('result');
+        // è‹¥åªæƒ³æƒæä¸€æ¬¡å°±åœæ­¢
+        html5QrcodeScanner.clear();
+    }
 
-        const qrConfig = { 
-            fps: 10, 
-            qrbox: { width: 250, height: 250 } 
-        };
+    function onScanFailure(error) {
+        // æƒæå¤±æ•—æ™‚å¯å¿½ç•¥ï¼Œé¿å…ç•«é¢ä¸€ç›´è·³éŒ¯èª¤
+    }
 
-        // ±½´y¦¨¥\¦^½Õ
-        const onScanSuccess = (decodedText, decodedResult) => {
-            resultDiv.innerHTML = `<strong>±½´y¦¨¥\¡G</strong> <br> ${decodedText}`;
-            resultDiv.style.color = "green";
-            // ¦pªG¦¨¥\«á·Q¦Û°Ê°±¤î¡A¥i¥H¸Ñ°£¤U¤èµù¸Ñ
-            // stopScanning();
-        };
+    const html5QrcodeScanner = new Html5QrcodeScanner(
+        "reader",
+        {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+            rememberLastUsedCamera: true,
+            supportedScanTypes: [
+                Html5QrcodeScanType.SCAN_TYPE_CAMERA
+            ]
+        },
+        false
+    );
 
-        // ¶}©l±½´y
-        startBtn.addEventListener('click', () => {
-            startBtn.disabled = true;
-            stopBtn.disabled = false;
-            resultDiv.innerText = "¥¿¦b±Ò°Ê¬Û¾÷...";
+    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+</script>
 
-            // ¨Ï¥Î«á¸mÃèÀY (environment)
-            html5QrCode.start(
-                { facingMode: "environment" }, 
-                qrConfig, 
-                onScanSuccess
-            ).catch((err) => {
-                resultDiv.innerText = `¿ù»~: ${err}`;
-                resultDiv.style.color = "red";
-                startBtn.disabled = false;
-                stopBtn.disabled = true;
-            });
-        });
-
-        // °±¤î±½´y
-        const stopScanning = () => {
-            html5QrCode.stop().then(() => {
-                resultDiv.innerText = "±½´y¤w°±¤î¡C";
-                startBtn.disabled = false;
-                stopBtn.disabled = true;
-            }).catch((err) => {
-                console.error("°±¤î¥¢±Ñ", err);
-            });
-        };
-
-        stopBtn.addEventListener('click', stopScanning);
-    </script>
 </body>
 </html>
